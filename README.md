@@ -3,5 +3,11 @@
 create the database and tables by running
 
 ```bash
-uv run python python_create_relational_db.py
+uv run python create_relational_db.py
+```
+
+execute the chat application
+
+```bash
+uv run streamlit run chats.py
 ```
