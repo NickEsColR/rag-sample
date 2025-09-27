@@ -247,7 +247,7 @@ def chat_page(chat_id):
                     vectordb = load_collection(collection_name)
                     vectordb = add_documents_to_collection(vectordb, document)
                 # Save source to database
-                create_source(uploaded_file.name, "", chat_id, source_type="document")
+                create_source(uploaded_file.name, "", chat_id, type="document")
                 # Remove temp file
                 os.remove(temp_file_path)
 
@@ -311,7 +311,7 @@ def chat_page(chat_id):
                             add_documents_to_collection(vectordb, documents)
 
                         # Save link to database
-                        create_source(new_link, "", chat_id, source_type="link")
+                        create_source(new_link, "", chat_id, type="link")
                         st.success(f"Added link: {new_link}")
                         del st.session_state["add_link_btn"]
                         st.rerun()
