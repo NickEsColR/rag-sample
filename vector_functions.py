@@ -1,6 +1,6 @@
 import os
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_azure_ai.embeddings import AzureAIEmbeddingsModel
 from langchain_core.documents import Document
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
@@ -16,20 +16,30 @@ from langchain_community.document_loaders import (
 )
 
 import environ
+
 env = environ.Env()
 
 # reading .env file
-environ.Env.read_env()
+environ.Env.read_env(env_file=".env")
+token = env("GITHUB_TOKEN")
+
+if not isinstance(token, str):
+    raise ValueError("GITHUB_TOKEN environment variable must be set and be a string")
 
 llm = AzureAIChatCompletionsModel(
     endpoint="https://models.github.ai/inference",
     model="mistral-ai/mistral-medium-2505",
-    credential=env("GITHUB_TOKEN"),
+    credential=token,
 )
 
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+embeddings = AzureAIEmbeddingsModel(
+    endpoint="https://models.github.ai/inference",
+    credential=token,
+    model="openai/text-embedding-3-small",
+)
 
 text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+
 
 def load_document(file_path: str) -> list[Document]:
     """
@@ -63,6 +73,7 @@ def load_document(file_path: str) -> list[Document]:
         raise ValueError(f"Unsupported file type: {file_extension}")
 
     return loader.load()
+
 
 def create_collection(collection_name, documents):
     """
@@ -110,7 +121,7 @@ def load_collection(collection_name):
     This function loads a previously created Chroma collection from disk.
     """
     persist_directory = "./persist"
-    
+
     # Load the Chroma collection from the specified directory
     vectordb = Chroma(
         persist_directory=persist_directory,
@@ -119,7 +130,6 @@ def load_collection(collection_name):
     )
 
     return vectordb
-
 
 
 def add_documents_to_collection(vectordb, documents):
@@ -140,6 +150,7 @@ def add_documents_to_collection(vectordb, documents):
     vectordb.add_documents(texts)
 
     return vectordb
+
 
 def load_retriever(collection_name, score_threshold: float = 0.6):
     """
@@ -167,6 +178,7 @@ def load_retriever(collection_name, score_threshold: float = 0.6):
         search_kwargs={"score_threshold": score_threshold},
     )
     return retriever
+
 
 def generate_answer_from_context(retriever, question: str):
     """
